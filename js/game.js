@@ -56,7 +56,6 @@ function main(){
 }
 
 function preload(){
-	console.log("preload()");
 	
 	game = this;
 	game.score = 0;
@@ -92,7 +91,6 @@ function preload(){
 }
 
 function create(){
-	console.log("create()");
 	
 	world = new World(game);
 	ui = new UI();
