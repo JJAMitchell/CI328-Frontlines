@@ -3,6 +3,7 @@ let phaser;
 let world;
 
 let ui;
+let audio;
 
 var playerHealth;
 var enemyHealth;
@@ -34,7 +35,6 @@ var highScore;
 
 
 function main(){
-	console.log("main()");
 	
 	var config = {
 		type: Phaser.AUTO,
@@ -80,6 +80,15 @@ function preload(){
 	game.load.image('enemyRifleSpr','assets/enemyRifleSprite.png');
 	game.load.image('enemyScoutSpr','assets/enemyScoutSprite.png');
 	game.load.image('enemyAssualtSpr','assets/enemyAssualtSprite.png');
+	
+	//Audio
+	
+	//Glorious Morning by Waterflame https://www.newgrounds.com/audio/listen/91476
+	game.load.audio('theme','assets/audio/mainTheme.mp3');
+	//Gunshot sound by tcawte https://freesound.org/people/tcawte/sounds/147901/
+	game.load.audio('gunshot','assets/audio/gunshot.mp3');
+	//Marching sound by WebbFilmsUK https://freesound.org/people/WebbFilmsUK/sounds/200321/
+	game.load.audio('marching','assets/audio/marchingSound.wav');
 }
 
 function create(){
@@ -87,13 +96,25 @@ function create(){
 	
 	world = new World(game);
 	ui = new UI();
+	audio = new Audio();
 	
 	var pointer = game.input.activePointer;	
 	
-	easyButton = game.add.image(phaser.config.width/2,phaser.config.height/2 - 200,'easyButton').setInteractive().setOrigin(0.5,0.5).setScale(2);
-	mediumButton = game.add.image(phaser.config.width/2,phaser.config.height/2 - 100,'easyButton').setInteractive().setOrigin(0.5,0.5).setScale(2);
-	hardButton = game.add.image(phaser.config.width/2,phaser.config.height/2,'easyButton').setInteractive().setOrigin(0.5,0.5).setScale(2);
+	//Sets difficulty Buttons
+	easyButton = game.add.text(phaser.config.width/2,phaser.config.height/2 - 150,'Easy',{
+		font:'50px Arial',
+		fill:'#fff'
+	}).setInteractive().setOrigin(0.5,0.5);
+	mediumButton = game.add.text(phaser.config.width/2,phaser.config.height/2 - 50,'Medium',{
+		font:'50px Arial',
+		fill:'#fff'
+	}).setInteractive().setOrigin(0.5,0.5);
+	hardButton = game.add.text(phaser.config.width/2,phaser.config.height/2 + 50,'Hard',{
+		font:'50px Arial',
+		fill:'#fff'
+	}).setInteractive().setOrigin(0.5,0.5);
 	
+	//Sets unit buttons
 	rifleButton = game.add.image(0,phaser.config.height,'rifleButtonSpr').setInteractive().setOrigin(0,1);
 	scoutButton = game.add.image(200,phaser.config.height,'scoutButtonSpr').setInteractive().setOrigin(0,1);
 	assualtButton = game.add.image(400,phaser.config.height,'assualtButtonSpr').setInteractive().setOrigin(0,1);
@@ -105,13 +126,14 @@ function create(){
 	highScore = 0;
 	ui.updateHighScoreText(highScore);
 	
+	//Sets physic groups
 	playerGrp = game.physics.add.group();
 	enemyGrp = game.physics.add.group();
 	
 	game.physics.add.overlap(playerGrp,enemyGrp,fight,null,this);
 	
+	//Difficulty buttons
 	easyButton.on('pointerdown',function(pointer){
-		console.log("easyButton()");
 		startGame();
 		
 		difficulty = 40;
@@ -120,7 +142,6 @@ function create(){
 	});
 	
 	mediumButton.on('pointerdown',function(pointer){
-		console.log("mediumButton()");
 		startGame();
 		
 		difficulty = 50;
@@ -129,7 +150,6 @@ function create(){
 	});
 	
 	hardButton.on('pointerdown',function(pointer){
-		console.log("hardButton()");
 		startGame();
 		
 		difficulty = 60;
@@ -137,10 +157,12 @@ function create(){
 		disableButtons();
 	});
 	
+	//Unit buttons
 	rifleButton.on('pointerdown', function(pointer){
 		if(!game.paused){
 			if(game.time.now > rifleDelay){
 				playerRifle();
+				audio.marching.play();
 				rifleDelay = game.time.now + 2000;
 			}
 		}
@@ -150,6 +172,7 @@ function create(){
 		if(!game.paused){
 			if(game.time.now > scoutDelay){
 				playerScout();
+				audio.marching.play();
 				scoutDelay = game.time.now + 5000;
 			}
 		}
@@ -159,6 +182,7 @@ function create(){
 		if(!game.paused){
 			if(game.time.now > assualtDelay){
 				playerAssualt();
+				audio.marching.play();
 				assualtDelay = game.time.now + 7500;
 			}
 		}
@@ -167,6 +191,8 @@ function create(){
 	ui.disableScoreText();
 	
 	ui.showStartText();
+	
+	audio.theme.play();
 	
 	pauseGame();
 	
@@ -183,8 +209,6 @@ function resumeGame(){
 function startGame(){
 	if(!game.paused)
 		return;
-	
-	console.log("startGame()");
 	
 	ui.disableStartText();
 	ui.disableScoreText();
@@ -207,10 +231,9 @@ function startGame(){
 function endGame(){	
 	pauseGame();
 	
-	console.log("endGame()");
-	
 	ui.updateScoreText(game.score);
 	
+	//Sets highscore
 	if(game.score > highScore){
 		ui.updateHighScoreText(game.score);
 		highScore = game.score;
@@ -229,6 +252,7 @@ function endGame(){
 function update(){
 	aiMove();
 	
+	//Checks if any player or enemy has reached the ends of the screen.
 	for(var i=0;i<playerChild.length;i++){
 		if(playerChild[i].x>phaser.config.width - 75){
 			playerChild[i].destroy();
@@ -247,6 +271,7 @@ function update(){
 		}
 	}
 	
+	//Greys out the unit buttons if delay is still active
 	if(game.time.now<rifleDelay){
 		rifleButton.setTint(0xd3d3d3);
 	}else{
@@ -265,6 +290,7 @@ function update(){
 		assualtButton.clearTint();
 	}
 	
+	//Checks if either side has no health left
 	if(playerHealth<=0||enemyHealth<=0){
 		
 		for(var i=0;i<playerChild.length;i++){
@@ -279,13 +305,13 @@ function update(){
 	}
 }
 
+//Player and enemy unit functions
 function playerRifle(){
 	var x = Phaser.Math.Between(-10,-100);
     var y = Phaser.Math.Between(50,500);
 	var playerRifle = playerGrp.create(x,y,'playerRifleSpr');
 	playerRifle.setOrigin(0.5,0.5);
 	playerRifle.setVelocityX(100);
-	console.log("playerRifle()");
 }
 
 function playerScout(){
@@ -294,7 +320,6 @@ function playerScout(){
 	var playerScout = playerGrp.create(x,y,'playerScoutSpr');
 	playerScout.setOrigin(0.5,0.5);
 	playerScout.setVelocityX(150);
-	console.log("playerScout()");
 }
 
 function playerAssualt(){
@@ -304,7 +329,6 @@ function playerAssualt(){
 	playerAssualt.setOrigin(0.5,0.5);
 	playerAssualt.setScale(1.5);
 	playerAssualt.setVelocityX(50);
-	console.log("playerAssualt()");
 }
 	
 function enemyRifle(){
@@ -313,7 +337,6 @@ function enemyRifle(){
 	var enemyRifle = enemyGrp.create(x,y,'enemyRifleSpr');
 	enemyRifle.setOrigin(0.5,0.5);
 	enemyRifle.setVelocityX(-100);
-	console.log("enemyRifle()");
 }
 
 function enemyScout(){
@@ -322,7 +345,6 @@ function enemyScout(){
 	var enemyScout = enemyGrp.create(x,y,'enemyScoutSpr');
 	enemyScout.setOrigin(0.5,0.5);
 	enemyScout.setVelocityX(-150);
-	console.log("enemyScout()");
 }
 
 function enemyAssualt(){
@@ -332,9 +354,9 @@ function enemyAssualt(){
 	enemyAssualt.setOrigin(0.5,0.5);
 	enemyAssualt.setVelocityX(-50);
 	enemyAssualt.setScale(1.5);
-	console.log("enemyAssualt()");
 }
 
+//Player and enemy units move towards eachother
 function aiMove(){	
 	playerChild = playerGrp.getChildren();
 	enemyChild = enemyGrp.getChildren();
@@ -359,21 +381,27 @@ function aiMove(){
 	}	
 }
 
+//Handles collision between the player and enemies.
 function fight(player,enemy){
 	var chance = Phaser.Math.Between(0,100);
+	//The difficulty increases or decreases the number that the chance has beat for the player unit to win
     if(chance > difficulty){
         enemy.destroy();
 		enemyHealth-=1;
 		ui.updateEnemyHealth(enemyHealth);
 		game.score+=10;
+		audio.gunshot.play();
     }else{
         player.destroy();
 		playerHealth-=1;
 		ui.updatePlayerHealth(playerHealth);
 		game.score-=1;
+		audio.gunshot.play();
     }
 }
 
+
+//Functions handle enabling and disabling difficulty buttons.
 function enableButtons(){
 	easyButton.visible = true;
 	mediumButton.visible = true;

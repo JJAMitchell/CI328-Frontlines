@@ -23,7 +23,7 @@ class UI{
 		});
 		this.scoreText.setOrigin(0.5, 0.5);
 		
-		this.highScoreText = game.add.text(phaser.config.width/2,500, 'High Score: ',{
+		this.highScoreText = game.add.text(phaser.config.width/2,550, 'High Score: ',{
 			font: '30px Arial',
 			fill: '#fff'
 		});
@@ -38,6 +38,7 @@ class UI{
 		
     }
 
+	//Update scores
     updateScoreText(newScore) {
         this.scoreText.setText('Score: ' + newScore);
     }
@@ -46,6 +47,7 @@ class UI{
 		this.highScoreText.setText('High Score: '+ newScore);
 	}
 	
+	//Update health
 	updatePlayerHealth(newHealth){
 		this.playerHealthText.setText('Player Morale: ' + newHealth);
 	}
@@ -54,6 +56,7 @@ class UI{
 		this.enemyHealthText.setText('Enemy Morale: ' + newHealth);
 	}
 	
+	//Show/hide functions
 	showStartText(){
 		this.startText.visible = true;
 	}
